@@ -1,0 +1,25 @@
+{
+  "name": "superlevels",
+  "version": "1.0.0",
+  "description": "by [@levelsio](https://x.com/levelsio)",
+  "main": "background.js",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i input.css -o styles.css --minify",
+    "build": "npm run build:css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thatbeautifuldream/superlevels.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thatbeautifuldream/superlevels/issues"
+  },
+  "homepage": "https://github.com/thatbeautifuldream/superlevels#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.4",
+    "tailwindcss": "^4.2.4"
+  }
+}

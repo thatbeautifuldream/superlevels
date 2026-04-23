@@ -1,11 +1,15 @@
 // ═══════════════════════════════════
 //  Navigation
 // ═══════════════════════════════════
-document.querySelectorAll(".nav button").forEach((btn) => {
+document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".nav button").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach((b) => {
+      b.classList.remove("active", "text-zinc-100", "bg-white/[0.06]");
+      b.classList.add("text-zinc-500");
+    });
     document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
-    btn.classList.add("active");
+    btn.classList.remove("text-zinc-500");
+    btn.classList.add("active", "text-zinc-100", "bg-white/[0.06]");
     document.getElementById("page-" + btn.dataset.page).classList.add("active");
     if (btn.dataset.page === "cookies") loadCookies();
     if (btn.dataset.page === "redirects") loadRedirects();
@@ -72,11 +76,11 @@ function removeHost(host) {
 
 function renderExclusionList(exclusions) {
   if (!exclusions.length) {
-    listEl.innerHTML = '<div class="empty">No exclusions — all tabs can be closed</div>';
+    listEl.innerHTML = '<div class="text-zinc-600 text-xs text-center py-3">No exclusions — all tabs can be closed</div>';
     return;
   }
   listEl.innerHTML = exclusions
-    .map((h) => `<div class="item"><span>${esc(h)}</span><button data-host="${escA(h)}">&times;</button></div>`)
+    .map((h) => `<div class="flex items-center justify-between px-2.5 py-1.5 bg-zinc-900 rounded-md mb-1 text-sm inset-ring inset-ring-white/[0.03]"><span class="break-all min-w-0">${esc(h)}</span><button type="button" data-host="${escA(h)}" class="bg-transparent border-none text-zinc-500 text-sm cursor-pointer px-1 leading-none hover:text-zinc-100">&times;</button></div>`)
     .join("");
   listEl.querySelectorAll("button[data-host]").forEach((btn) => {
     btn.addEventListener("click", () => removeHost(btn.dataset.host));
@@ -94,16 +98,16 @@ function loadClosedTabs() {
       return;
     }
     closedSection.innerHTML = `
-      <div class="closed-header">
-        <h2>Recently Closed</h2>
-        <button id="clearClosed">Clear</button>
+      <div class="flex items-center justify-between mb-1.5">
+        <h2 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-0">Recently Closed</h2>
+        <button type="button" id="clearClosed" class="bg-transparent border-none text-zinc-400 text-[11px] cursor-pointer font-medium hover:text-zinc-100">Clear</button>
       </div>
     ` + closed.map((t, i) => `
-      <div class="closed-item" data-url="${escA(t.url)}" data-idx="${i}">
-        ${t.favIconUrl ? `<img class="favicon" src="${escA(t.favIconUrl)}" onerror="this.style.display='none'">` : '<div class="favicon"></div>'}
-        <span class="closed-title" title="${escA(t.url)}">${esc(t.title)}</span>
-        <span class="closed-time">${timeAgo(t.time)}</span>
-        <button class="reopen" title="Re-open">↗</button>
+      <div class="closed-item flex items-center gap-2 px-2.5 py-[7px] bg-zinc-900 rounded-md mb-1 cursor-pointer inset-ring inset-ring-white/[0.03]" data-url="${escA(t.url)}" data-idx="${i}">
+        ${t.favIconUrl ? `<img class="w-4 h-4 rounded shrink-0" src="${escA(t.favIconUrl)}" onerror="this.style.display='none'">` : '<div class="w-4 h-4 rounded shrink-0 bg-zinc-800"></div>'}
+        <span class="text-xs flex-1 min-w-0 truncate">${esc(t.title)}</span>
+        <span class="text-[10px] text-zinc-600 shrink-0 tabular-nums">${timeAgo(t.time)}</span>
+        <button type="button" class="reopen bg-transparent border-none text-zinc-400 text-[13px] cursor-pointer shrink-0 px-0.5 hover:text-zinc-100" title="Re-open">&#x2197;</button>
       </div>
     `).join("");
 
@@ -112,8 +116,12 @@ function loadClosedTabs() {
     });
 
     closedSection.querySelectorAll(".closed-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        chrome.tabs.create({ url: item.dataset.url });
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".reopen")) {
+          chrome.tabs.create({ url: item.dataset.url });
+        } else {
+          chrome.tabs.create({ url: item.dataset.url });
+        }
       });
     });
   });
@@ -147,7 +155,7 @@ async function loadCookies() {
   if (!tab || !tab.url) {
     cookieDomainEl.textContent = "No accessible page";
     cookieCountEl.textContent = "0";
-    cookieListEl.innerHTML = '<div class="empty">Cannot read cookies from this page</div>';
+    cookieListEl.innerHTML = '<div class="text-zinc-600 text-xs text-center py-3">Cannot read cookies from this page</div>';
     return;
   }
   currentUrl = tab.url;
@@ -167,69 +175,52 @@ async function loadCookies() {
 
 function renderCookies(cookies) {
   if (!cookies.length) {
-    cookieListEl.innerHTML = '<div class="empty">No cookies for this site</div>';
+    cookieListEl.innerHTML = '<div class="text-zinc-600 text-xs text-center py-3">No cookies for this site</div>';
     return;
   }
   cookieListEl.innerHTML = cookies.map((c, i) => `
-    <div class="cookie-item" data-idx="${i}">
-      <div class="cookie-row">
-        <span class="cookie-chevron">&#9660;</span>
-        <span class="cookie-name">${esc(c.name)}</span>
-        <button class="cookie-del" data-delidx="${i}" title="Delete">&times;</button>
+    <div class="cookie-item bg-zinc-900 rounded-lg mb-1 overflow-hidden inset-ring inset-ring-white/[0.03]" data-idx="${i}">
+      <div class="cookie-row flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-white/[0.02]">
+        <span class="cookie-chevron text-[10px] text-zinc-600 shrink-0 w-3.5 text-center transition-transform duration-200">&#9660;</span>
+        <span class="cookie-name flex-1 text-sm font-medium truncate">${esc(c.name)}</span>
+        <button type="button" class="cookie-del bg-transparent border-none text-zinc-600 text-sm cursor-pointer px-0.5 opacity-0 hover:text-zinc-100" data-delidx="${i}" title="Delete">&times;</button>
       </div>
-      <div class="cookie-details">
-        <div class="cookie-field">
-          <label>Name</label>
-          <input type="text" value="${escA(c.name)}" data-field="name" data-i="${i}">
-        </div>
-        <div class="cookie-field">
-          <label>Value</label>
-          <textarea data-field="value" data-i="${i}">${esc(c.value)}</textarea>
-        </div>
-        <div class="advanced-toggle" data-adv="${i}">Show Advanced</div>
+      <div class="cookie-details hidden px-3 pb-3 pl-[34px]">
+        <div class="mb-2"><label class="block text-[11px] text-zinc-500 mb-1 font-medium">Name</label><input type="text" value="${escA(c.name)}" data-field="name" data-i="${i}" class="w-full px-2 py-1.5 bg-zinc-950 border border-white/10 rounded-md text-zinc-300 text-xs font-mono outline-none focus-visible:border-zinc-400"></div>
+        <div class="mb-2"><label class="block text-[11px] text-zinc-500 mb-1 font-medium">Value</label><textarea data-field="value" data-i="${i}" class="w-full px-2 py-1.5 bg-zinc-950 border border-white/10 rounded-md text-zinc-300 text-xs font-mono outline-none focus-visible:border-zinc-400 resize-y min-h-[48px]">${esc(c.value)}</textarea></div>
+        <button type="button" class="advanced-toggle text-[11px] text-zinc-400 cursor-pointer text-right mb-1.5 bg-transparent border-none font-medium hover:text-zinc-200" data-adv="${i}">Show Advanced</button>
         <div class="advanced-fields" data-advf="${i}">
-          <div class="cookie-field">
-            <label>Domain</label>
-            <input type="text" value="${escA(c.domain)}" data-field="domain" data-i="${i}">
-          </div>
-          <div class="cookie-field">
-            <label>Path</label>
-            <input type="text" value="${escA(c.path)}" data-field="path" data-i="${i}">
-          </div>
-          <div class="cookie-field">
-            <label>SameSite</label>
-            <input type="text" value="${escA(c.sameSite || "unspecified")}" data-field="sameSite" data-i="${i}">
-          </div>
-          <div class="cookie-field">
-            <label>Secure: ${c.secure ? "Yes" : "No"} &nbsp;|&nbsp; HttpOnly: ${c.httpOnly ? "Yes" : "No"}</label>
-          </div>
+          <div class="mb-2"><label class="block text-[11px] text-zinc-500 mb-1 font-medium">Domain</label><input type="text" value="${escA(c.domain)}" data-field="domain" data-i="${i}" class="w-full px-2 py-1.5 bg-zinc-950 border border-white/10 rounded-md text-zinc-300 text-xs font-mono outline-none focus-visible:border-zinc-400"></div>
+          <div class="mb-2"><label class="block text-[11px] text-zinc-500 mb-1 font-medium">Path</label><input type="text" value="${escA(c.path)}" data-field="path" data-i="${i}" class="w-full px-2 py-1.5 bg-zinc-950 border border-white/10 rounded-md text-zinc-300 text-xs font-mono outline-none focus-visible:border-zinc-400"></div>
+          <div class="mb-2"><label class="block text-[11px] text-zinc-500 mb-1 font-medium">SameSite</label><input type="text" value="${escA(c.sameSite || "unspecified")}" data-field="sameSite" data-i="${i}" class="w-full px-2 py-1.5 bg-zinc-950 border border-white/10 rounded-md text-zinc-300 text-xs font-mono outline-none focus-visible:border-zinc-400"></div>
+          <div class="text-[11px] text-zinc-500 mb-2">Secure: ${c.secure ? "Yes" : "No"} &nbsp;|&nbsp; HttpOnly: ${c.httpOnly ? "Yes" : "No"}</div>
         </div>
-        <div class="cookie-actions">
-          <button class="btn-save" data-saveidx="${i}">&#128190; Save</button>
-          <button class="btn-del2" data-delidx="${i}">&#128465; Delete</button>
+        <div class="flex gap-1.5 mt-1.5">
+          <button type="button" class="px-2.5 py-1 bg-zinc-100 hover:bg-white text-zinc-950 rounded-md text-[11px] font-semibold cursor-pointer border-none focus-visible:outline-2 focus-visible:outline-zinc-400 focus-visible:outline-offset-2" data-saveidx="${i}">Save</button>
+          <button type="button" class="px-2.5 py-1 bg-zinc-800 text-zinc-300 rounded-md text-[11px] font-semibold cursor-pointer border-none hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-zinc-400 focus-visible:outline-offset-2" data-delidx="${i}">Delete</button>
         </div>
       </div>
     </div>
   `).join("");
 
-  // Expand / collapse
   cookieListEl.querySelectorAll(".cookie-row").forEach((row) => {
     row.addEventListener("click", (e) => {
       if (e.target.closest(".cookie-del")) return;
-      row.closest(".cookie-item").classList.toggle("expanded");
+      const item = row.closest(".cookie-item");
+      item.classList.toggle("expanded");
+      const details = item.querySelector(".cookie-details");
+      details.classList.toggle("hidden");
     });
   });
 
-  // Show Advanced
   cookieListEl.querySelectorAll(".advanced-toggle").forEach((t) => {
     t.addEventListener("click", () => {
       const fields = cookieListEl.querySelector(`.advanced-fields[data-advf="${t.dataset.adv}"]`);
-      fields.classList.toggle("show");
-      t.textContent = fields.classList.contains("show") ? "Hide Advanced" : "Show Advanced";
+      fields.classList.toggle("hidden");
+      t.textContent = fields.classList.contains("hidden") ? "Show Advanced" : "Hide Advanced";
     });
   });
 
-  // Delete buttons
   cookieListEl.querySelectorAll("[data-delidx]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -237,7 +228,6 @@ function renderCookies(cookies) {
     });
   });
 
-  // Save buttons
   cookieListEl.querySelectorAll("[data-saveidx]").forEach((btn) => {
     btn.addEventListener("click", () => saveCookie(parseInt(btn.dataset.saveidx)));
   });
@@ -260,7 +250,6 @@ async function saveCookie(idx) {
   const pathEl = item.querySelector('[data-field="path"]');
   const sameSiteEl = item.querySelector('[data-field="sameSite"]');
 
-  // Remove old cookie first
   const protocol = original.secure ? "https" : "http";
   const oldUrl = `${protocol}://${original.domain.replace(/^\./, "")}${original.path}`;
   await chrome.cookies.remove({ url: oldUrl, name: original.name });
@@ -273,7 +262,7 @@ async function saveCookie(idx) {
     url: newUrl,
     name: nameEl.value,
     value: valueEl.value,
-    path: path,
+    path,
     secure: original.secure,
     httpOnly: original.httpOnly,
     sameSite: sameSiteEl ? sameSiteEl.value : original.sameSite || "unspecified",
@@ -285,7 +274,6 @@ async function saveCookie(idx) {
   loadCookies();
 }
 
-// Delete All
 document.getElementById("btnDeleteAll").addEventListener("click", async () => {
   if (!allCookies.length) return;
   for (const c of allCookies) {
@@ -296,10 +284,8 @@ document.getElementById("btnDeleteAll").addEventListener("click", async () => {
   loadCookies();
 });
 
-// Refresh
 document.getElementById("btnRefresh").addEventListener("click", () => loadCookies());
 
-// Export
 document.getElementById("btnExport").addEventListener("click", () => {
   if (!allCookies.length) return;
   const data = JSON.stringify(allCookies, null, 2);
@@ -353,7 +339,7 @@ let lastRedirectText = "";
 async function loadRedirects() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) {
-    redirectChainEl.innerHTML = '<div class="redirect-empty"><div class="big-icon">🔀</div><p>No active tab</p></div>';
+    redirectChainEl.innerHTML = '<div class="text-center py-10 px-5 text-zinc-600"><div class="text-3xl mb-2.5">&#x1F500;</div><p class="text-sm">No active tab</p></div>';
     return;
   }
 
@@ -363,7 +349,6 @@ async function loadRedirects() {
   const finalStatus = data.finalStatus || 200;
 
   if (!chain.length) {
-    // No redirects — just show the final URL
     redirectChainEl.innerHTML = renderStep(finalUrl, finalStatus, true, false);
     lastRedirectText = `${finalUrl}\n${finalStatus}: Final destination`;
     return;
@@ -371,12 +356,11 @@ async function loadRedirects() {
 
   let html = "";
   let text = "";
-  chain.forEach((hop, i) => {
+  chain.forEach((hop) => {
     const label = getRedirectLabel(hop.statusCode);
     html += renderStep(hop.url, hop.statusCode, false, true);
     text += `${hop.url}\n${hop.statusCode}: ${label} to ${hop.redirectUrl}\n\n`;
   });
-  // Final destination
   html += renderStep(finalUrl, finalStatus, true, false);
   text += `${finalUrl}\n${finalStatus}: Final destination`;
 
@@ -385,35 +369,29 @@ async function loadRedirects() {
 }
 
 function renderStep(url, statusCode, isFinal, hasConnector) {
-  const iconClass = isFinal ? (statusCode >= 400 ? "error" : "final") : "redirect";
+  const iconClass = isFinal ? (statusCode >= 400 ? "redirect-icon-error" : "redirect-icon-final") : "redirect-icon-redirect";
   const codeClass = statusCode >= 500 ? "code-5xx" : statusCode >= 400 ? "code-4xx" : `code-${statusCode}`;
   const label = isFinal ? "Final destination" : getRedirectLabel(statusCode);
   const arrow = isFinal
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="#6af38a" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="#6ab0f3" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="text-zinc-300 shrink-0 size-4"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="text-zinc-400 shrink-0 size-4"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
 
   return `
-    <div class="redirect-step">
-      <div style="display:flex;flex-direction:column;align-items:center;">
-        <div class="step-icon ${iconClass}">${arrow}</div>
-        ${hasConnector ? '<div class="step-connector"></div>' : ''}
+    <div class="redirect-step flex gap-3 relative mb-0">
+      <div class="flex flex-col items-center">
+        <div class="redirect-step-icon ${iconClass} w-9 h-9 shrink-0 rounded-md flex items-center justify-center relative z-[1]">${arrow}</div>
+        ${hasConnector ? '<div class="step-connector" style="position:absolute;left:17px;top:36px;width:1px;height:calc(100%);background:rgba(255,255,255,0.1)"></div>' : ''}
       </div>
-      <div class="step-content">
-        <div class="step-url">${esc(url)}</div>
-        <div class="step-status"><span class="code ${codeClass}">${statusCode}</span> ${esc(label)}</div>
+      <div class="step-content flex-1 min-w-0 pb-3.5">
+        <div class="text-sm font-medium break-all leading-snug">${esc(url)}</div>
+        <div class="text-[11px] text-zinc-500 mt-0.5"><span class="code font-semibold px-1.5 py-px rounded text-[10px] tabular-nums ${codeClass}">${statusCode}</span> ${esc(label)}</div>
       </div>
     </div>
   `;
 }
 
 function getRedirectLabel(code) {
-  const labels = {
-    301: "Permanent redirect",
-    302: "Temporary redirect (Found)",
-    303: "See Other",
-    307: "Temporary redirect",
-    308: "Permanent redirect",
-  };
+  const labels = { 301: "Permanent redirect", 302: "Temporary redirect (Found)", 303: "See Other", 307: "Temporary redirect", 308: "Permanent redirect" };
   return labels[code] || `Redirect (${code})`;
 }
 
@@ -432,22 +410,20 @@ document.getElementById("btnRedirectCopy").addEventListener("click", async () =>
 //  Dark Mode
 // ═══════════════════════════════════
 const darkToggle = document.getElementById("darkToggle");
-const darkStatus = document.getElementById("darkStatus");
-const darkHostEl = document.getElementById("darkHost");
 const darkBrightness = document.getElementById("darkBrightness");
 const darkBrightnessVal = document.getElementById("darkBrightnessVal");
 const scopeSite = document.getElementById("scopeSite");
 const scopeGlobal = document.getElementById("scopeGlobal");
 
 let darkHost = "";
-let darkScope = "site"; // "site" or "global"
+let darkScope = "site";
 
 async function loadDarkMode() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.url) return;
 
   try { darkHost = new URL(tab.url).hostname; } catch { darkHost = ""; }
-  darkHostEl.textContent = darkHost ? `Current site: ${darkHost}` : "";
+  document.getElementById("darkHost").textContent = darkHost ? `Current site: ${darkHost}` : "";
 
   const siteKey = "darkmode_" + darkHost;
   const data = await chrome.storage.local.get([siteKey, "darkmode_global", "darkmode_brightness"]);
@@ -465,8 +441,9 @@ async function loadDarkMode() {
 }
 
 function updateDarkStatus(on) {
-  darkStatus.textContent = on ? "ON" : "OFF";
-  darkStatus.className = "status " + (on ? "on" : "off");
+  const el = document.getElementById("darkStatus");
+  el.textContent = on ? "ON" : "OFF";
+  el.className = on ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
 }
 
 async function applyDark() {
@@ -474,7 +451,6 @@ async function applyDark() {
   const brightness = parseInt(darkBrightness.value);
   updateDarkStatus(enabled);
 
-  // Save preference
   if (darkScope === "global") {
     await chrome.storage.local.set({ darkmode_global: enabled });
   } else {
@@ -483,14 +459,9 @@ async function applyDark() {
   }
   await chrome.storage.local.set({ darkmode_brightness: brightness });
 
-  // Send to active tab's content script
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab) {
-    chrome.tabs.sendMessage(tab.id, {
-      type: "darkmode_toggle",
-      enabled,
-      brightness,
-    }).catch(() => {});
+    chrome.tabs.sendMessage(tab.id, { type: "darkmode_toggle", enabled, brightness }).catch(() => {});
   }
 }
 
@@ -501,37 +472,26 @@ darkBrightness.addEventListener("input", () => {
 });
 darkBrightness.addEventListener("change", applyDark);
 
-scopeSite.addEventListener("click", () => {
-  darkScope = "site";
-  scopeSite.classList.add("active");
-  scopeGlobal.classList.remove("active");
-});
-scopeGlobal.addEventListener("click", () => {
-  darkScope = "global";
-  scopeGlobal.classList.add("active");
-  scopeSite.classList.remove("active");
-});
+function setScopeActive(activeBtn, inactiveBtn) {
+  activeBtn.classList.add("scope-active", "border-zinc-100", "text-zinc-100", "bg-zinc-100/10");
+  activeBtn.classList.remove("text-zinc-500");
+  inactiveBtn.classList.remove("scope-active", "border-zinc-100", "text-zinc-100", "bg-zinc-100/10");
+  inactiveBtn.classList.add("text-zinc-500");
+}
+scopeSite.addEventListener("click", () => { darkScope = "site"; setScopeActive(scopeSite, scopeGlobal); });
+scopeGlobal.addEventListener("click", () => { darkScope = "global"; setScopeActive(scopeGlobal, scopeSite); });
 
 // ═══════════════════════════════════
 //  X Dim Mode
 // ═══════════════════════════════════
 const xdimToggle = document.getElementById("xdimToggle");
-const xdimStatus = document.getElementById("xdimStatus");
 const xdimPreview = document.getElementById("xdimPreview");
 const xdimHueSlider = document.getElementById("xdimHueSlider");
 const xdimHueVal = document.getElementById("xdimHueVal");
 const xdimCustomHueSection = document.getElementById("xdimCustomHueSection");
 const xdimDots = document.querySelectorAll(".xdim-dot");
 
-const XDIM_THEMES = {
-  dim:   { hue: 210, sat: 34 },
-  slate: { hue: 210, sat: 8  },
-  jade:  { hue: 150, sat: 34 },
-  plum:  { hue: 270, sat: 34 },
-  dusk:  { hue: 330, sat: 34 },
-  ember: { hue: 25,  sat: 34 },
-};
-
+const XDIM_THEMES = { dim: { hue: 210, sat: 34 }, slate: { hue: 210, sat: 8 }, jade: { hue: 150, sat: 34 }, plum: { hue: 270, sat: 34 }, dusk: { hue: 330, sat: 34 }, ember: { hue: 25, sat: 34 } };
 let xdimTheme = "dim";
 let xdimCustomHue = 210;
 
@@ -543,7 +503,7 @@ async function loadXDim() {
 
   xdimToggle.checked = enabled;
   xdimHueSlider.value = xdimCustomHue;
-  xdimHueVal.textContent = xdimCustomHue + "°";
+  xdimHueVal.textContent = xdimCustomHue + "\u00B0";
 
   updateXDimStatus(enabled);
   updateXDimThemeDots();
@@ -551,14 +511,13 @@ async function loadXDim() {
 }
 
 function updateXDimStatus(on) {
-  xdimStatus.textContent = on ? "ON" : "OFF";
-  xdimStatus.className = "status " + (on ? "on" : "off");
+  const el = document.getElementById("xdimStatus");
+  el.textContent = on ? "ON" : "OFF";
+  el.className = on ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
 }
 
 function updateXDimThemeDots() {
-  xdimDots.forEach((dot) => {
-    dot.classList.toggle("active", dot.dataset.theme === xdimTheme);
-  });
+  xdimDots.forEach((dot) => { dot.classList.toggle("active", dot.dataset.theme === xdimTheme); });
   xdimCustomHueSection.classList.toggle("show", xdimTheme === "custom");
 }
 
@@ -569,25 +528,21 @@ function getXDimHueSat() {
 
 function updateXDimPreview() {
   const { hue: h, sat: s } = getXDimHueSat();
-  const bSat = Math.round(s * 0.47);
   const bar = xdimPreview.querySelector(".xdim-preview-bar");
   const tweet = xdimPreview.querySelector(".xdim-preview-tweet");
   bar.style.background = `hsl(${h}, ${s}%, 16%)`;
   bar.style.color = `hsl(${h}, ${Math.round(s * 0.32)}%, 60%)`;
   tweet.style.background = `hsl(${h}, ${s}%, 13%)`;
   tweet.style.color = `hsl(${h}, ${Math.round(s * 0.32)}%, 60%)`;
-  tweet.style.borderColor = `hsl(${h}, ${bSat}%, 26%)`;
+  tweet.style.borderColor = `hsl(${h}, ${Math.round(s * 0.47)}%, 26%)`;
 }
 
 xdimToggle.addEventListener("change", async () => {
   const enabled = xdimToggle.checked;
   updateXDimStatus(enabled);
   await chrome.storage.local.set({ xdim_enabled: enabled });
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "xdim_toggle", enabled }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "xdim_toggle", enabled }).catch(() => {});
 });
 
 xdimDots.forEach((dot) => {
@@ -599,21 +554,13 @@ xdimDots.forEach((dot) => {
   });
 });
 
-xdimHueSlider.addEventListener("input", () => {
-  xdimCustomHue = parseInt(xdimHueSlider.value);
-  xdimHueVal.textContent = xdimCustomHue + "°";
-  updateXDimPreview();
-});
-xdimHueSlider.addEventListener("change", async () => {
-  xdimCustomHue = parseInt(xdimHueSlider.value);
-  await chrome.storage.local.set({ xdim_customHue: xdimCustomHue });
-});
+xdimHueSlider.addEventListener("input", () => { xdimCustomHue = parseInt(xdimHueSlider.value); xdimHueVal.textContent = xdimCustomHue + "\u00B0"; updateXDimPreview(); });
+xdimHueSlider.addEventListener("change", async () => { xdimCustomHue = parseInt(xdimHueSlider.value); await chrome.storage.local.set({ xdim_customHue: xdimCustomHue }); });
 
 // ═══════════════════════════════════
-//  Cookie Consent (GDPR) Dismisser
+//  Cookie Consent (GDPR)
 // ═══════════════════════════════════
 const nocookieToggle = document.getElementById("nocookieToggle");
-const nocookieStatus = document.getElementById("nocookieStatus");
 
 async function loadNoCookie() {
   const data = await chrome.storage.local.get(["nocookie_enabled"]);
@@ -623,52 +570,42 @@ async function loadNoCookie() {
 }
 
 function updateNoCookieUI(on) {
-  nocookieStatus.textContent = on ? "ON" : "OFF";
-  nocookieStatus.className = "status " + (on ? "on" : "off");
+  const el = document.getElementById("nocookieStatus");
+  el.textContent = on ? "ON" : "OFF";
+  el.className = on ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
 }
 
 nocookieToggle.addEventListener("change", async () => {
   const enabled = nocookieToggle.checked;
   updateNoCookieUI(enabled);
   await chrome.storage.local.set({ nocookie_enabled: enabled });
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "nocookie_toggle", enabled }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "nocookie_toggle", enabled }).catch(() => {});
 });
 
 // ═══════════════════════════════════
 //  Live CSS Editor
 // ═══════════════════════════════════
-const livecssHostEl = document.getElementById("livecssHost");
 const livecssEditor = document.getElementById("livecssEditor");
 const livecssSave = document.getElementById("livecssSave");
 const livecssClear = document.getElementById("livecssClear");
-
 let livecssHost = "";
 
 async function loadLiveCSS() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.url) return;
-
   try { livecssHost = new URL(tab.url).hostname; } catch { livecssHost = ""; }
-  livecssHostEl.textContent = livecssHost ? `Editing CSS for: ${livecssHost}` : "No accessible page";
-
+  document.getElementById("livecssHost").textContent = livecssHost ? `Editing CSS for: ${livecssHost}` : "No accessible page";
   const key = "livecss_" + livecssHost;
   const data = await chrome.storage.local.get([key]);
   livecssEditor.value = data[key] || "";
 }
 
-// Live preview as user types
 livecssEditor.addEventListener("input", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "livecss_update", css: livecssEditor.value }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "livecss_update", css: livecssEditor.value }).catch(() => {});
 });
 
-// Allow Tab key to insert spaces in textarea
 livecssEditor.addEventListener("keydown", (e) => {
   if (e.key === "Tab") {
     e.preventDefault();
@@ -692,16 +629,13 @@ livecssClear.addEventListener("click", async () => {
   const key = "livecss_" + livecssHost;
   await chrome.storage.local.remove(key);
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "livecss_update", css: "" }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "livecss_update", css: "" }).catch(() => {});
 });
 
 // ═══════════════════════════════════
 //  YouTube Unhook
 // ═══════════════════════════════════
 const unhookToggle = document.getElementById("unhookToggle");
-const unhookStatus = document.getElementById("unhookStatus");
 
 async function loadUnhook() {
   const data = await chrome.storage.local.get(["unhook_enabled"]);
@@ -711,40 +645,33 @@ async function loadUnhook() {
 }
 
 function updateUnhookUI(on) {
-  unhookStatus.textContent = on ? "ON" : "OFF";
-  unhookStatus.className = "status " + (on ? "on" : "off");
+  const el = document.getElementById("unhookStatus");
+  el.textContent = on ? "ON" : "OFF";
+  el.className = on ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
 }
 
 unhookToggle.addEventListener("change", async () => {
   const enabled = unhookToggle.checked;
   updateUnhookUI(enabled);
   await chrome.storage.local.set({ unhook_enabled: enabled });
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "unhook_toggle", enabled }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "unhook_toggle", enabled }).catch(() => {});
 });
 
 // ═══════════════════════════════════
 //  JavaScript Toggle
 // ═══════════════════════════════════
 const jsToggle = document.getElementById("jsToggle");
-const jsStatus = document.getElementById("jsStatus");
 const jsIndicator = document.getElementById("jsIndicator");
-const jsHostLabel = document.getElementById("jsHostLabel");
 
 let jsHost = "";
 
 async function loadJsToggle() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.url) return;
-
   try { jsHost = new URL(tab.url).hostname; } catch { jsHost = ""; }
-  jsHostLabel.textContent = jsHost || "No accessible page";
-
+  document.getElementById("jsHostLabel").textContent = jsHost || "No accessible page";
   if (!jsHost) return;
-
   if (!chrome.contentSettings || !chrome.contentSettings.javascript) return;
   const pattern = `https://${jsHost}/*`;
   chrome.contentSettings.javascript.get({ primaryUrl: pattern }, (details) => {
@@ -755,28 +682,19 @@ async function loadJsToggle() {
 }
 
 function updateJsUI(enabled) {
-  jsStatus.textContent = enabled ? "ENABLED" : "DISABLED";
-  jsStatus.className = "status " + (enabled ? "on" : "off");
-  jsIndicator.className = "indicator " + (enabled ? "on" : "off");
+  const el = document.getElementById("jsStatus");
+  el.textContent = enabled ? "ENABLED" : "DISABLED";
+  el.className = enabled ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
+  jsIndicator.className = enabled ? "w-2.5 h-2.5 rounded-full shrink-0 bg-zinc-100" : "w-2.5 h-2.5 rounded-full shrink-0 bg-zinc-500";
 }
 
 jsToggle.addEventListener("change", async () => {
   const enabled = jsToggle.checked;
   updateJsUI(enabled);
-
   if (!chrome.contentSettings || !chrome.contentSettings.javascript) return;
   const pattern = `https://${jsHost}/*`;
-  chrome.contentSettings.javascript.set({
-    primaryPattern: pattern,
-    setting: enabled ? "allow" : "block",
-  });
-  // Also set for http
-  chrome.contentSettings.javascript.set({
-    primaryPattern: `http://${jsHost}/*`,
-    setting: enabled ? "allow" : "block",
-  });
-
-  // Reload the tab so the change takes effect
+  chrome.contentSettings.javascript.set({ primaryPattern: pattern, setting: enabled ? "allow" : "block" });
+  chrome.contentSettings.javascript.set({ primaryPattern: `http://${jsHost}/*`, setting: enabled ? "allow" : "block" });
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab) chrome.tabs.reload(tab.id);
 });
@@ -784,12 +702,10 @@ jsToggle.addEventListener("change", async () => {
 // ═══════════════════════════════════
 //  Music Recognizer (ACRCloud)
 // ═══════════════════════════════════
-// ACRCloud credentials — loaded from storage so they're not hardcoded in source
 let ACR_HOST = "";
 let ACR_KEY = "";
 let ACR_SECRET = "";
 
-// Load saved creds (set defaults on first run)
 chrome.storage.local.get(["acr_host", "acr_key", "acr_secret"], (data) => {
   ACR_HOST = data.acr_host || "identify-eu-west-1.acrcloud.com";
   ACR_KEY = data.acr_key || "";
@@ -803,30 +719,25 @@ const musicResult = document.getElementById("musicResult");
 const musicHistoryEl = document.getElementById("musicHistory");
 let isRecording = false;
 
-listenBtn.addEventListener("click", () => {
-  if (isRecording) return;
-  startListening();
-});
+listenBtn.addEventListener("click", () => { if (!isRecording) startListening(); });
 
 async function startListening() {
   if (!ACR_KEY || !ACR_SECRET) {
-    musicResult.innerHTML = `<div class="music-error">ACRCloud credentials not set. <a href="https://www.acrcloud.com/sign-up/" target="_blank" style="color:#6a9fd8;">Sign up free</a> and add them below.</div>`;
+    musicResult.innerHTML = '<div class="text-center py-3 px-3 rounded-lg text-xs bg-zinc-900 inset-ring inset-ring-white/5 text-zinc-400">ACRCloud credentials not set. <a href="https://www.acrcloud.com/sign-up/" target="_blank" class="text-zinc-300 underline">Sign up free</a> and add them below.</div>';
     showAcrConfig();
     return;
   }
   isRecording = true;
   listenBtn.classList.add("recording");
+  listenBtn.querySelector(".mic-icon").classList.add("hidden");
+  listenBtn.querySelector(".bars-icon").classList.remove("hidden");
   listenBtn.closest(".music-center").classList.add("active");
   listenLabel.textContent = "Listening...";
   musicResult.innerHTML = "";
 
   let seconds = 10;
   listenTimer.textContent = seconds + "s";
-  const interval = setInterval(() => {
-    seconds--;
-    listenTimer.textContent = seconds + "s";
-    if (seconds <= 0) clearInterval(interval);
-  }, 1000);
+  const interval = setInterval(() => { seconds--; listenTimer.textContent = seconds + "s"; if (seconds <= 0) clearInterval(interval); }, 1000);
 
   try {
     const stream = await new Promise((resolve, reject) => {
@@ -836,41 +747,31 @@ async function startListening() {
         resolve(s);
       });
     });
-
-    // Pipe audio back to speakers so user still hears it
     const audioCtx = new AudioContext();
     const source = audioCtx.createMediaStreamSource(stream);
     source.connect(audioCtx.destination);
-
-    // Record 5 seconds
     const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
     const chunks = [];
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-
     const blob = await new Promise((resolve) => {
-      recorder.onstop = () => {
-        source.disconnect();
-        audioCtx.close();
-        stream.getTracks().forEach((t) => t.stop());
-        resolve(new Blob(chunks, { type: "audio/webm" }));
-      };
+      recorder.onstop = () => { source.disconnect(); audioCtx.close(); stream.getTracks().forEach((t) => t.stop()); resolve(new Blob(chunks, { type: "audio/webm" })); };
       recorder.start();
       setTimeout(() => recorder.stop(), 10000);
     });
-
     clearInterval(interval);
     listenTimer.textContent = "";
     listenLabel.textContent = "Identifying...";
-
     const result = await identifyWithACR(blob);
     showResult(result);
   } catch (err) {
     clearInterval(interval);
-    musicResult.innerHTML = `<div class="music-error">${esc(err.message)}</div>`;
+    musicResult.innerHTML = `<div class="text-center py-3 px-3 rounded-lg text-xs bg-zinc-900 inset-ring inset-ring-white/5 text-zinc-400">${esc(err.message)}</div>`;
     showAcrConfig();
   } finally {
     isRecording = false;
     listenBtn.classList.remove("recording");
+    listenBtn.querySelector(".mic-icon").classList.remove("hidden");
+    listenBtn.querySelector(".bars-icon").classList.add("hidden");
     listenBtn.closest(".music-center").classList.remove("active");
     listenTimer.textContent = "";
     listenLabel.textContent = "Tap to listen";
@@ -879,9 +780,7 @@ async function startListening() {
 
 async function hmacSha1(key, message) {
   const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw", enc.encode(key), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]
-  );
+  const cryptoKey = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
   const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(message));
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
@@ -890,7 +789,6 @@ async function identifyWithACR(audioBlob) {
   const timestamp = Math.floor(Date.now() / 1000);
   const stringToSign = `POST\n/v1/identify\n${ACR_KEY}\naudio\n1\n${timestamp}`;
   const signature = await hmacSha1(ACR_SECRET, stringToSign);
-
   const arrayBuf = await audioBlob.arrayBuffer();
   const form = new FormData();
   form.append("access_key", ACR_KEY);
@@ -900,10 +798,8 @@ async function identifyWithACR(audioBlob) {
   form.append("timestamp", timestamp.toString());
   form.append("sample_bytes", arrayBuf.byteLength.toString());
   form.append("sample", audioBlob, "sample.webm");
-
   const resp = await fetch(`https://${ACR_HOST}/v1/identify`, { method: "POST", body: form });
   const data = await resp.json();
-
   if (data.status && data.status.code === 0 && data.metadata) {
     const music = data.metadata.music;
     const humming = data.metadata.humming;
@@ -911,7 +807,7 @@ async function identifyWithACR(audioBlob) {
     if (humming && humming.length > 0) return humming[0];
     throw new Error("Song recognized but no match found. Try a clearer part of the track.");
   } else if (data.status && data.status.code === 0) {
-    throw new Error("No match found. Try during a clearer part of the song (e.g. chorus).");
+    throw new Error("No match found. Try during a clearer part of the song.");
   } else if (data.status && data.status.code === 1001) {
     throw new Error("No music detected. Make sure audio is playing in the tab.");
   } else {
@@ -923,23 +819,21 @@ function showResult(song) {
   const title = song.title || "Unknown";
   const artist = (song.artists || []).map((a) => a.name).join(", ") || "Unknown";
   const album = song.album ? song.album.name : "";
-
   const ytQuery = encodeURIComponent(`${title} ${artist}`);
   const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
 
   musicResult.innerHTML = `
-    <a class="song-card" href="${ytUrl}" target="_blank" style="text-decoration:none;color:inherit;cursor:pointer;">
-      <div class="art">🎵</div>
-      <div class="info">
-        <div class="title">${esc(title)}</div>
-        <div class="artist">${esc(artist)}</div>
-        ${album ? `<div class="album">${esc(album)}</div>` : ""}
+    <a class="flex items-center gap-3 p-3.5 bg-zinc-900 rounded-lg no-underline text-inherit cursor-pointer inset-ring inset-ring-white/[0.05]" href="${ytUrl}" target="_blank">
+      <div class="w-14 h-14 rounded-md bg-zinc-800 flex items-center justify-center text-2xl shrink-0 overflow-hidden">&#x1F3B5;</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-semibold text-zinc-100 truncate">${esc(title)}</div>
+        <div class="text-xs text-zinc-400 mt-0.5 truncate">${esc(artist)}</div>
+        ${album ? `<div class="text-[11px] text-zinc-600 mt-0.5 truncate">${esc(album)}</div>` : ""}
       </div>
-      <div style="color:#e94560;font-size:18px;flex-shrink:0;">▶</div>
+      <div class="text-zinc-300 text-lg shrink-0">&#x25B6;</div>
     </a>
   `;
 
-  // Save to history
   chrome.storage.local.get(["music_history"], (data) => {
     const history = data.music_history || [];
     history.unshift({ title, artist, album, time: Date.now() });
@@ -948,7 +842,6 @@ function showResult(song) {
   });
 }
 
-// ACR config save/load
 document.getElementById("acrSaveBtn").addEventListener("click", () => {
   const host = document.getElementById("acrHost").value.trim();
   const key = document.getElementById("acrKey").value.trim();
@@ -970,7 +863,6 @@ document.getElementById("acrSettingsBtn").addEventListener("click", () => {
   const cfg = document.getElementById("acrConfig");
   if (cfg.style.display === "none") {
     cfg.style.display = "";
-    // Load fields without the auto-hide logic
     chrome.storage.local.get(["acr_host", "acr_key", "acr_secret"], (data) => {
       document.getElementById("acrHost").value = data.acr_host || "identify-eu-west-1.acrcloud.com";
       document.getElementById("acrKey").value = data.acr_key || "";
@@ -981,13 +873,11 @@ document.getElementById("acrSettingsBtn").addEventListener("click", () => {
   }
 });
 
-// Load ACR fields when music tab opens
 function loadAcrFields() {
   chrome.storage.local.get(["acr_host", "acr_key", "acr_secret"], (data) => {
     document.getElementById("acrHost").value = data.acr_host || "identify-eu-west-1.acrcloud.com";
     document.getElementById("acrKey").value = data.acr_key || "";
     document.getElementById("acrSecret").value = data.acr_secret || "";
-    // Only show config if creds are missing
     if (!data.acr_key || !data.acr_secret) showAcrConfig();
     else document.getElementById("acrConfig").style.display = "none";
   });
@@ -996,21 +886,16 @@ function loadAcrFields() {
 function loadMusicHistory() {
   chrome.storage.local.get(["music_history"], (data) => {
     const history = data.music_history || [];
-    if (!history.length) {
-      musicHistoryEl.innerHTML = "";
-      return;
-    }
-    musicHistoryEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between"><h2>Recent</h2><button id="clearHistory" style="background:none;border:none;color:#e94560;font-size:11px;cursor:pointer;">Clear</button></div>` + history.map((h) => {
+    if (!history.length) { musicHistoryEl.innerHTML = ""; return; }
+    musicHistoryEl.innerHTML = `<div class="flex items-center justify-between mb-1.5"><h2 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-0">Recent</h2><button type="button" id="clearHistory" class="bg-transparent border-none text-zinc-400 text-[11px] cursor-pointer font-medium hover:text-zinc-100">Clear</button></div>` + history.map((h) => {
       const q = encodeURIComponent(`${h.title} ${h.artist}`);
-      return `<a class="history-item" href="https://www.youtube.com/results?search_query=${q}" target="_blank" style="text-decoration:none;color:inherit;cursor:pointer;">
-        <span class="h-title">${esc(h.title)}</span>
-        <span class="h-artist">${esc(h.artist)}</span>
-        <span style="color:#e94560;font-size:12px;flex-shrink:0;">▶</span>
+      return `<a class="flex items-center gap-2.5 px-2.5 py-2 bg-zinc-900 rounded-md mb-1 no-underline text-inherit cursor-pointer inset-ring inset-ring-white/[0.03]" href="https://www.youtube.com/results?search_query=${q}" target="_blank">
+        <span class="text-xs font-medium text-zinc-400 flex-1 min-w-0 truncate">${esc(h.title)}</span>
+        <span class="text-[11px] text-zinc-600 truncate max-w-[100px]">${esc(h.artist)}</span>
+        <span class="text-zinc-300 text-xs shrink-0">&#x25B6;</span>
       </a>`;
     }).join("");
-    document.getElementById("clearHistory").addEventListener("click", () => {
-      chrome.storage.local.remove("music_history", loadMusicHistory);
-    });
+    document.getElementById("clearHistory").addEventListener("click", () => { chrome.storage.local.remove("music_history", loadMusicHistory); });
   });
 }
 
@@ -1018,50 +903,31 @@ function loadMusicHistory() {
 //  Picture-in-Picture
 // ═══════════════════════════════════
 const pipBtn = document.getElementById("pipBtn");
-const pipLabel = document.getElementById("pipLabel");
 const pipStatus = document.getElementById("pipStatus");
 
 pipBtn.addEventListener("click", enterPiP);
 
 async function enterPiP() {
-  pipStatus.textContent = "";
-  pipStatus.className = "pip-status";
+  const el = pipStatus;
+  el.textContent = "";
+  el.className = "pip-status text-xs text-zinc-600 min-h-[18px]";
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab) {
-    pipStatus.textContent = "No active tab";
-    pipStatus.className = "pip-status err";
-    return;
-  }
+  if (!tab) { el.textContent = "No active tab"; el.classList.add("text-zinc-400"); return; }
 
   try {
     const result = await chrome.runtime.sendMessage({ type: "pip", tabId: tab.id });
-    if (!result) {
-      pipStatus.textContent = "Could not access page";
-      pipStatus.className = "pip-status err";
-    } else if (result.error) {
-      pipStatus.textContent = result.error;
-      pipStatus.className = "pip-status err";
-    } else if (result.action === "entered") {
-      pipStatus.textContent = "Video in Picture-in-Picture";
-      pipStatus.className = "pip-status ok";
-      pipBtn.classList.add("active");
-    } else if (result.action === "exited") {
-      pipStatus.textContent = "Exited Picture-in-Picture";
-      pipStatus.className = "pip-status ok";
-      pipBtn.classList.remove("active");
-    }
-  } catch (err) {
-    pipStatus.textContent = err.message;
-    pipStatus.className = "pip-status err";
-  }
+    if (!result) { el.textContent = "Could not access page"; el.classList.add("text-zinc-400"); }
+    else if (result.error) { el.textContent = result.error; el.classList.add("text-zinc-400"); }
+    else if (result.action === "entered") { el.textContent = "Video in Picture-in-Picture"; el.classList.add("text-zinc-100"); }
+    else if (result.action === "exited") { el.textContent = "Exited Picture-in-Picture"; el.classList.add("text-zinc-100"); }
+  } catch (err) { el.textContent = err.message; el.classList.add("text-zinc-400"); }
 }
 
 // ═══════════════════════════════════
 //  JSON Formatter
 // ═══════════════════════════════════
 const jsonformatToggle = document.getElementById("jsonformatToggle");
-const jsonformatStatus = document.getElementById("jsonformatStatus");
 
 async function loadJsonFormat() {
   const data = await chrome.storage.local.get(["jsonformat_enabled"]);
@@ -1071,19 +937,17 @@ async function loadJsonFormat() {
 }
 
 function updateJsonFormatUI(on) {
-  jsonformatStatus.textContent = on ? "ON" : "OFF";
-  jsonformatStatus.className = "status " + (on ? "on" : "off");
+  const el = document.getElementById("jsonformatStatus");
+  el.textContent = on ? "ON" : "OFF";
+  el.className = on ? "text-sm font-medium text-zinc-100" : "text-sm font-medium text-zinc-500";
 }
 
 jsonformatToggle.addEventListener("change", async () => {
   const enabled = jsonformatToggle.checked;
   updateJsonFormatUI(enabled);
   await chrome.storage.local.set({ jsonformat_enabled: enabled });
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: "jsonformat_toggle", enabled }).catch(() => {});
-  }
+  if (tab) chrome.tabs.sendMessage(tab.id, { type: "jsonformat_toggle", enabled }).catch(() => {});
 });
 
 // ═══════════════════════════════════

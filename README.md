@@ -10,10 +10,6 @@ A super Chrome extension that replaces 12+ separate extensions with one open-sou
 
 Most Chrome extensions are closed-source malware/spyware-filled garbage that form a massive security risk. This one is open source and you can read and check the source code (with AI) before you install it, and customize it to your liking!
 
-## Demo
-
-![SuperLevels Demo](demo.gif)
-
 ## Security
 
 Before installing any Chrome extension, you should verify it's safe. This extension is fully open source so you can audit every line of code yourself — or let AI do it for you:
