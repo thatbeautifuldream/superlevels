@@ -8,7 +8,7 @@ Most Chrome extensions are closed-source malware/spyware-filled garbage that for
 
 ## Demo
 
-<video src="https://github.com/levelsio/superlevels/raw/main/demo.mp4" controls width="600"></video>
+![SuperLevels Demo](demo.gif)
 
 ## Security
 
